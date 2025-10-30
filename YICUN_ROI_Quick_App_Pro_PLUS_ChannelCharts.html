@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>YICUN 盈虧速算 Pro＋｜渠道統計版</title>
+  <meta name="theme-color" content="#000000"/>
+  <style>
+    :root { --yc-orange:#ff6a00; --bg:#0b0b0c; --card:#141416; --muted:#9aa0a6; --text:#f7f7f7;
+            --ok:#2ecc71; --warn:#f1c40f; --bad:#e74c3c; --border:#1f1f22; --radius:18px; --shadow:0 10px 30px rgba(0,0,0,0.35); }
+    *{box-sizing:border-box}
+    html,body{height:100%;background:radial-gradient(1000px 600px at 80% -10%, rgba(255,106,0,0.16), transparent 50%),
+                                   radial-gradient(700px 500px at -20% 110%, rgba(255,106,0,0.12), transparent 50%), var(--bg);
+              color:var(--text);font-family:"Source Han Sans TC","Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei",Arial,sans-serif;margin:0}
+    .wrap{max-width:1120px;margin:0 auto;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 4px 8px}
+    .brand{display:flex;align-items:baseline;gap:10px}
+    .logo{font-weight:800;letter-spacing:1.5px;font-size:20px;line-height:1}
+    .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:linear-gradient(180deg,rgba(255,106,0,0.25),rgba(255,106,0,0.15));border:1px solid rgba(255,106,0,0.3);color:var(--yc-orange)}
+    .toolbar{display:flex;gap:10px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,106,0,0.5);
+         background:linear-gradient(180deg,rgba(255,106,0,0.25),rgba(255,106,0,0.06));color:var(--text);text-decoration:none;font-weight:700;font-size:13px;cursor:pointer}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0));border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .field{display:grid;gap:8px}
+    label{font-size:13px;color:var(--muted)}
+    input,select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--text);padding:12px 12px;font-size:16px;outline:none}
+    input:focus,select:focus{border-color:rgba(255,106,0,0.6);box-shadow:0 0 0 4px rgba(255,106,0,0.12)}
+    hr.sep{border:0;height:1px;background:linear-gradient(90deg,rgba(255,106,0,0),rgba(255,106,0,0.45),rgba(255,106,0,0));margin:14px 0}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .pill{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+    .pill h3{margin:0;font-size:13px;color:var(--muted);font-weight:600}
+    .pill .val{margin-top:6px;font-size:22px;font-weight:800;letter-spacing:.3px}
+    .val.ok{color:var(--ok)} .val.warn{color:var(--warn)} .val.bad{color:var(--bad)}
+    .tabs{display:flex;gap:10px;margin:12px 0}
+    .tab{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer}
+    .tab.active{border-color:rgba(255,106,0,0.6);box-shadow:0 0 0 4px rgba(255,106,0,0.12)}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--border);padding:10px 8px;text-align:right;font-size:14px;vertical-align:top}
+    th{text-align:right;color:#c9cdd2;font-weight:700}
+    th:first-child,td:first-child{text-align:left}
+    tfoot td{font-weight:800}
+    .note{color:var(--muted);font-size:12px;line-height:1.5;margin-top:10px}
+    .settings{display:none;margin:10px 0 6px 0;padding:10px;border-radius:14px;border:1px dashed rgba(255,106,0,0.45);background:rgba(255,106,0,0.05)}
+    .settings .grid2{gap:10px}
+    .toggle{font-size:12px;color:#ffc9a6;cursor:pointer;text-decoration:underline}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    canvas{width:100%;height:320px;background:var(--card);border:1px solid var(--border);border-radius:14px}
+    @media (max-width:900px){ .kpi{grid-template-columns:1fr 1fr} .grid4{grid-template-columns:1fr 1fr} .charts{grid-template-columns:1fr} }
+    @media (max-width:600px){ .grid3{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">YICUN<span style="font-size:11px; opacity:.7; margin-left:4px;">®</span></div>
+        <div class="badge">盈虧速算 Pro＋</div>
+      </div>
+      <div class="toolbar">
+        <button id="export" class="btn">匯出 CSV</button>
+        <button id="clearLog" class="btn">清空所有記錄</button>
+        <button id="settingsBtn" class="btn">設定</button>
+      </div>
+    </header>
+
+    <!-- 可視化的「快速設定」面板（非彈窗） -->
+    <div id="settingsPanel" class="settings card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:800">快速設定</div>
+        <div id="hideSettings" class="toggle">收起</div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="cfg_platform">平台抽成預設（%）</label>
+          <input id="cfg_platform" type="number" inputmode="decimal" placeholder="20">
+        </div>
+        <div class="field">
+          <label for="cfg_gross">毛利率預設（%）</label>
+          <input id="cfg_gross" type="number" inputmode="decimal" placeholder="60">
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button id="saveCfgBtn" class="btn">儲存並套用</button>
+        <button id="resetCfgBtn" class="btn">還原預設</button>
+      </div>
+      <div class="note">儲存在本機（localStorage）。若「進階選項」輸入框留空，會自動帶入這裡的預設值。</div>
+    </div>
+    <div id="showSettings" class="toggle" style="display:inline-block;margin:6px 0 12px 4px">展開快速設定</div>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="quick">快速計算</div>
+        <div class="tab" data-tab="log">每日記錄 / 區間加總</div>
+      </div>
+
+      <div id="panel-quick">
+        <div class="grid2">
+          <div class="field">
+            <label for="rev">營業額（含稅/含運）</label>
+            <input id="rev" type="number" inputmode="decimal" placeholder="例如：3999">
+          </div>
+          <div class="field">
+            <label for="ad">廣告花費</label>
+            <input id="ad" type="number" inputmode="decimal" placeholder="例如：1200">
+          </div>
+        </div>
+
+        <hr class="sep"/>
+
+        <div class="kpi">
+          <div class="pill"><h3>ROI（ROAS）</h3><div id="roi" class="val">—</div></div>
+          <div class="pill"><h3>廣告費佔營收</h3><div id="adRate" class="val">—</div></div>
+          <div class="pill"><h3>估算淨利</h3><div id="net" class="val">—</div></div>
+          <div class="pill"><h3>打平所需 ROI</h3><div id="be" class="val">—</div></div>
+        </div>
+
+        <details style="margin-top:10px">
+          <summary>進階選項</summary>
+          <div class="grid3" style="margin-top:10px">
+            <div class="field">
+              <label for="platform">平台抽成（%）</label>
+              <input id="platform" type="number" inputmode="decimal" placeholder="預設 20">
+            </div>
+            <div class="field">
+              <label for="gross">毛利率（%）</label>
+              <input id="gross" type="number" inputmode="decimal" placeholder="預設 60">
+            </div>
+            <div class="field">
+              <label for="other">其他費用（物流/包材/稅等）</label>
+              <input id="other" type="number" inputmode="decimal" placeholder="可留空">
+            </div>
+          </div>
+        </details>
+
+        <div class="note">說明：打平所需 ROI ≈ 1 ÷（毛利率 ×（1－平台抽成率））。</div>
+      </div>
+
+      <div id="panel-log" style="display:none">
+        <div class="grid4">
+          <div class="field">
+            <label for="date">日期</label>
+            <input id="date" type="date">
+          </div>
+          <div class="field">
+            <label for="revD">營業額</label>
+            <input id="revD" type="number" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="adD">廣告花費</label>
+            <input id="adD" type="number" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="channel">渠道</label>
+            <select id="channel">
+              <option value="">（選擇或留空）</option>
+              <option>廣告</option>
+              <option>自然</option>
+              <option>直播</option>
+              <option>站外</option>
+              <option>其他</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="field">
+            <label for="note">備註</label>
+            <input id="note" type="text" placeholder="例：蝦皮整點直播、抽獎、活動檔期…">
+          </div>
+          <div class="field" style="align-self:end">
+            <button id="addRow" class="btn">新增到記錄</button>
+          </div>
+        </div>
+
+        <hr class="sep"/>
+
+        <div class="grid2">
+          <div class="pill">
+            <h3>本月營業額總計</h3><div id="mRev" class="val">—</div>
+          </div>
+          <div class="pill">
+            <h3>本月廣告費總計</h3><div id="mAd" class="val">—</div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="pill">
+            <h3>本月平均 ROI</h3><div id="mROI" class="val">—</div>
+          </div>
+          <div class="pill">
+            <h3>廣告費佔營收（本月）</h3><div id="mRate" class="val">—</div>
+          </div>
+        </div>
+
+        <hr class="sep"/>
+
+        <div class="card" style="background:rgba(255,255,255,0.02)">
+          <div style="font-weight:700;margin-bottom:8px">本月明細</div>
+          <div style="overflow:auto; max-height:360px;">
+            <table id="tbl">
+              <thead>
+                <tr><th>日期</th><th>營業額</th><th>廣告費</th><th>渠道</th><th>備註</th><th>設定(毛/抽 %)</th><th>ROI</th></tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr><td>合計</td><td id="tRev">—</td><td id="tAd">—</td><td></td><td></td><td></td><td id="tROI">—</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <hr class="sep"/>
+
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:8px">本月渠道統計</div>
+          <div class="charts">
+            <div>
+              <canvas id="pieMonth" width="520" height="320"></canvas>
+              <div class="note">圓餅圖：各渠道營業額占比</div>
+            </div>
+            <div>
+              <canvas id="barMonth" width="520" height="320"></canvas>
+              <div class="note">長條圖：各渠道 ROI（營業額 / 廣告費；無廣告費視為 ∞）</div>
+            </div>
+          </div>
+          <div style="overflow:auto; max-height:260px; margin-top:12px;">
+            <table id="tblChMonth">
+              <thead>
+                <tr><th>渠道</th><th>營業額</th><th>廣告費</th><th>ROI</th><th>佔營收%</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <hr class="sep"/>
+
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:8px">區間加總 & 渠道統計</div>
+          <div class="grid3">
+            <div class="field">
+              <label for="from">起始日期</label>
+              <input id="from" type="date">
+            </div>
+            <div class="field">
+              <label for="to">結束日期（含）</label>
+              <input id="to" type="date">
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="sumRange" class="btn">計算區間加總</button>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <div class="pill">
+              <h3>區間營業額總計</h3><div id="rRev" class="val">—</div>
+            </div>
+            <div class="pill">
+              <h3>區間廣告費總計</h3><div id="rAd" class="val">—</div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <div class="pill">
+              <h3>區間平均 ROI</h3><div id="rROI" class="val">—</div>
+            </div>
+            <div class="pill">
+              <h3>區間廣告費佔營收</h3><div id="rRate" class="val">—</div>
+            </div>
+          </div>
+
+          <div class="charts" style="margin-top:10px">
+            <div>
+              <canvas id="pieRange" width="520" height="320"></canvas>
+              <div class="note">圓餅圖：區間各渠道營業額占比</div>
+            </div>
+            <div>
+              <canvas id="barRange" width="520" height="320"></canvas>
+              <div class="note">長條圖：區間各渠道 ROI</div>
+            </div>
+          </div>
+          <div style="overflow:auto; max-height:260px; margin-top:12px;">
+            <table id="tblChRange">
+              <thead>
+                <tr><th>渠道</th><th>營業額</th><th>廣告費</th><th>ROI</th><th>佔營收%</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+            <button id="exportRange" class="btn">匯出區間 CSV</button>
+          </div>
+        </div>
+
+        <div class="note">資料保存在本機（localStorage）。每筆記錄保留當時「毛利率%／平台抽成%」、以及「渠道、備註」。</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtN = (x) => isFinite(x) ? x.toLocaleString('zh-Hant-TW', {maximumFractionDigits: 2}) : '—';
+const fmtP = (x) => isFinite(x) ? (x*100).toLocaleString('zh-Hant-TW', {maximumFractionDigits: 1}) + '%' : '—';
+
+// Tabs
+document.querySelectorAll('.tab').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    const tab = el.dataset.tab;
+    $('panel-quick').style.display = tab==='quick' ? '' : 'none';
+    $('panel-log').style.display = tab==='log' ? '' : 'none';
+  });
+});
+
+// Defaults / Settings
+const defaultCfg = { platform: 20, gross: 60 };
+function getCfg() {
+  try { return Object.assign({}, defaultCfg, JSON.parse(localStorage.getItem('yc_roi_cfg')||'{}')); }
+  catch(e){ return {...defaultCfg}; }
+}
+function saveCfg(cfg){ try{ localStorage.setItem('yc_roi_cfg', JSON.stringify(cfg)); }catch(e){} }
+
+function applyCfgToUI(){
+  const cfg = getCfg();
+  $('cfg_platform').value = cfg.platform;
+  $('cfg_gross').value = cfg.gross;
+  if(!$('platform').value) $('platform').value = cfg.platform;
+  if(!$('gross').value) $('gross').value = cfg.gross;
+}
+
+// Quick calc
+function recalc() {
+  const rev = parseFloat($('rev').value);
+  const ad = parseFloat($('ad').value);
+  const platformPct = (parseFloat($('platform').value) || getCfg().platform) / 100;
+  const grossPct = (parseFloat($('gross').value) || getCfg().gross) / 100;
+  const other = parseFloat($('other').value);
+
+  const hasRev = !isNaN(rev) && rev > 0;
+  const hasAd = !isNaN(ad) && ad >= 0;
+
+  let roi = NaN, adRate = NaN;
+  if (hasRev && hasAd && ad > 0) { roi = rev / ad; adRate = ad / rev; }
+  else if (hasRev && ad === 0) { roi = Infinity; adRate = 0; }
+
+  let net = NaN;
+  const oth = isFinite(other) ? other : 0;
+  if (hasRev) { net = rev * grossPct * (1 - platformPct) - (hasAd ? ad : 0) - oth; }
+
+  let be = NaN;
+  const denom = grossPct * (1 - platformPct);
+  be = denom > 0 ? 1 / denom : NaN;
+
+  paintVal('roi', roi, (v)=> v>=3 ? 'ok' : (v>=2 ? 'warn' : 'bad'), (v)=> isFinite(v) ? v.toFixed(2) : '∞');
+  paintVal('adRate', adRate, (v)=> v<=0.15 ? 'ok' : (v<=0.3 ? 'warn' : 'bad'), (v)=> fmtP(v));
+  paintVal('net', net, (v)=> v>=0 ? 'ok' : 'bad', (v)=> 'NT$ ' + fmtN(v));
+  paintVal('be', be, (v)=> v<=2 ? 'ok' : (v<=3 ? 'warn' : 'bad'), (v)=> isFinite(v) ? v.toFixed(2) : '—');
+
+  const state = {rev:$('rev').value, ad:$('ad').value, platform:$('platform').value, gross:$('gross').value, other:$('other').value};
+  try { localStorage.setItem('yc_roi_quick_pro', JSON.stringify(state)); } catch(e) {}
+}
+function paintVal(id, val, clsPicker, formatter){ const el=$(id); if(!el) return;
+  if (isFinite(val) || val===Infinity){ el.textContent=formatter(val); el.className='val '+(clsPicker(val)||''); }
+  else { el.textContent='—'; el.className='val'; }
+}
+['rev','ad','platform','gross','other'].forEach(id=> $(id).addEventListener('input', recalc));
+
+// Visible settings panel
+function showSettingsPanel(show){
+  $('settingsPanel').style.display = show ? '' : 'none';
+  $('showSettings').style.display = show ? 'none' : 'inline-block';
+}
+$('settingsBtn').addEventListener('click', ()=> showSettingsPanel(true));
+$('showSettings').addEventListener('click', ()=> showSettingsPanel(true));
+$('hideSettings').addEventListener('click', ()=> showSettingsPanel(false));
+$('saveCfgBtn').addEventListener('click', ()=>{
+  const p = Math.max(0, parseFloat($('cfg_platform').value)||defaultCfg.platform);
+  const g = Math.max(0, parseFloat($('cfg_gross').value)||defaultCfg.gross);
+  saveCfg({platform:p, gross:g});
+  applyCfgToUI();
+  recalc();
+});
+$('resetCfgBtn').addEventListener('click', ()=>{
+  saveCfg(defaultCfg);
+  applyCfgToUI();
+  recalc();
+});
+
+// Daily Log with per-row config + channel + note
+function ymKey(d){ return d.slice(0,7); } // 'YYYY-MM'
+function getLog(){
+  try { return JSON.parse(localStorage.getItem('yc_roi_log')||'{}'); } catch(e){ return {}; }
+}
+function saveLog(log){ try{ localStorage.setItem('yc_roi_log', JSON.stringify(log)); }catch(e){} }
+function effectiveCfg(){
+  const cfg = getCfg();
+  const p = parseFloat($('platform').value); const g = parseFloat($('gross').value);
+  return { platform: isFinite(p)?p:cfg.platform, gross: isFinite(g)?g:cfg.gross };
+}
+function addRow(){
+  const d = $('date').value || new Date().toISOString().slice(0,10);
+  const rev = parseFloat($('revD').value)||0;
+  const ad = parseFloat($('adD').value)||0;
+  const ch = $('channel').value || '';
+  const nt = $('note').value || '';
+  const {platform, gross} = effectiveCfg(); // snapshot current settings
+  const key = ymKey(d);
+  const log = getLog();
+  log[key] = log[key] || [];
+  log[key].push({date:d, rev:rev, ad:ad, platform:platform, gross:gross, channel:ch, note:nt});
+  saveLog(log);
+  $('note').value='';
+  renderMonth();
+}
+function renderMonth(){
+  const today = new Date().toISOString().slice(0,7);
+  const log = getLog();
+  const rows = log[today] || [];
+  const tbody = document.querySelector('#tbl tbody');
+  tbody.innerHTML = '';
+  let sumR=0, sumA=0;
+  rows.sort((a,b)=> a.date.localeCompare(b.date)).forEach(r=>{
+    const roi = r.ad>0 ? r.rev / r.ad : (r.rev>0 ? Infinity : 0);
+    const cfgTxt = `${(r.gross??getCfg().gross)} / ${(r.platform??getCfg().platform)}`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.date}</td><td>${fmtN(r.rev)}</td><td>${fmtN(r.ad)}</td><td>${r.channel||''}</td><td style="max-width:320px;text-align:left">${(r.note||'').replace(/</g,'&lt;')}</td><td>${cfgTxt}</td><td>${isFinite(roi)?roi.toFixed(2):'∞'}</td>`;
+    tbody.appendChild(tr);
+    sumR += r.rev; sumA += r.ad;
+  });
+  const mROI = sumA>0 ? sumR/sumA : (sumR>0 ? Infinity : NaN);
+  $('tRev').textContent = fmtN(sumR);
+  $('tAd').textContent = fmtN(sumA);
+  $('tROI').textContent = isFinite(mROI)? mROI.toFixed(2) : (sumR>0 ? '∞' : '—');
+
+  $('mRev').textContent = 'NT$ ' + fmtN(sumR);
+  $('mAd').textContent = 'NT$ ' + fmtN(sumA);
+  paintVal('mROI', mROI, (v)=> v>=3 ? 'ok' : (v>=2 ? 'warn' : 'bad'), (v)=> isFinite(v)?v.toFixed(2):'∞');
+  const rate = sumR>0 ? sumA/sumR : NaN;
+  paintVal('mRate', rate, (v)=> v<=0.15 ? 'ok' : (v<=0.3 ? 'warn' : 'bad'), (v)=> fmtP(v));
+
+  renderChannelMonth(rows);
+}
+$('addRow').addEventListener('click', addRow);
+$('clearLog').addEventListener('click', ()=>{
+  if (confirm('確定清空所有月份記錄？')) { localStorage.removeItem('yc_roi_log'); renderMonth(); }
+});
+
+$('export').addEventListener('click', ()=>{
+  const log = getLog();
+  let csv = 'month,date,revenue,ad,platform_pct,gross_pct,channel,note,roi\n';
+  Object.keys(log).sort().forEach(m=>{
+    log[m].forEach(r=>{
+      const roi = r.ad>0 ? (r.rev/r.ad).toFixed(4) : (r.rev>0 ? 'INF' : '0');
+      const plat = (r.platform!=null)? r.platform : getCfg().platform;
+      const gro  = (r.gross!=null)? r.gross : getCfg().gross;
+      const ch   = (r.channel||'').replace(/,/g,' ');
+      const nt   = (r.note||'').replace(/\r?\n/g,' ').replace(/,/g,' ');
+      csv += `${m},${r.date},${r.rev},${r.ad},${plat},${gro},${ch},${nt},${roi}\n`;
+    });
+  });
+  downloadCSV(csv, 'yicun_roi_log.csv');
+});
+
+// --- Channel aggregation helpers ---
+const CHANNELS = ['廣告','自然','直播','站外','其他',''];
+function aggByChannel(rows){
+  const map = {};
+  rows.forEach(r=>{
+    const ch = r.channel||'';
+    map[ch] = map[ch] || {rev:0, ad:0, ch};
+    map[ch].rev += (r.rev||0);
+    map[ch].ad  += (r.ad||0);
+  });
+  const list = Object.values(map);
+  list.sort((a,b)=> b.rev - a.rev);
+  const totalRev = list.reduce((s,x)=>s+x.rev,0);
+  return {list, totalRev};
+}
+function drawPie(canvas, data){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height, cx = w/2, cy = h/2, r = Math.min(w,h)*0.36;
+  ctx.clearRect(0,0,w,h);
+  const sum = data.reduce((s,x)=>s+x.rev,0);
+  if (sum<=0){ ctx.fillStyle='#888'; ctx.fillText('無資料', cx-20, cy); return; }
+  let a0 = -Math.PI/2;
+  const palette = ['#ff6a00','#29b6f6','#66bb6a','#ab47bc','#ffa726','#8d6e63','#42a5f5','#ef5350'];
+  data.forEach((d,i)=>{
+    const ang = (d.rev/sum)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,a0,a0+ang);
+    ctx.closePath();
+    ctx.fillStyle = palette[i%palette.length];
+    ctx.fill();
+    // label
+    const mid = a0 + ang/2;
+    const lx = cx + Math.cos(mid)*(r+18);
+    const ly = cy + Math.sin(mid)*(r+18);
+    ctx.fillStyle = '#eee';
+    ctx.font = '12px sans-serif';
+    const label = `${d.ch||'未分類'} ${(d.rev/sum*100).toFixed(1)}%`;
+    ctx.fillText(label, lx-ctx.measureText(label).width/2, ly);
+    a0 += ang;
+  });
+}
+function drawBar(canvas, data){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const labels = data.map(d=>d.ch||'未分類');
+  const values = data.map(d=> d.ad>0 ? d.rev/d.ad : (d.rev>0 ? Infinity : 0) );
+  const maxFinite = Math.max( ...values.filter(v=>isFinite(v)).concat([1]) );
+  const pad = 32, bw = (w - pad*2) / values.length * 0.6;
+  const step = (w - pad*2) / values.length;
+  // axes
+  ctx.strokeStyle = '#333'; ctx.beginPath(); ctx.moveTo(pad, h-40); ctx.lineTo(w-pad, h-40); ctx.stroke();
+  values.forEach((v,i)=>{
+    const x = pad + i*step + (step-bw)/2;
+    let hVal;
+    if (!isFinite(v)){ hVal = h-100; } else { hVal = (h-100) * (v / (maxFinite*1.1)); }
+    const y = (h-40) - hVal;
+    ctx.fillStyle = '#ff6a00'; ctx.fillRect(x, y, bw, hVal);
+    ctx.fillStyle = '#ddd'; ctx.font = '12px sans-serif';
+    const text = isFinite(v)? v.toFixed(2) : '∞';
+    ctx.fillText(text, x + bw/2 - ctx.measureText(text).width/2, y-4);
+    // label
+    const lab = labels[i];
+    ctx.fillStyle = '#aaa';
+    const tw = ctx.measureText(lab).width;
+    ctx.fillText(lab, x + bw/2 - tw/2, h-22);
+  });
+}
+function renderChannelTable(tbodyId, rows){
+  const tb = document.querySelector('#'+tbodyId);
+  tb.innerHTML = '';
+  const {list, totalRev} = aggByChannel(rows);
+  list.forEach(r=>{
+    const roi = r.ad>0 ? r.rev/r.ad : (r.rev>0?Infinity:0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.ch||'未分類'}</td><td>${fmtN(r.rev)}</td><td>${fmtN(r.ad)}</td><td>${isFinite(roi)?roi.toFixed(2):'∞'}</td><td>${totalRev>0?((r.rev/totalRev*100).toFixed(1)+'%'):'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// Month channel render
+function renderChannelMonth(rows){
+  const {list} = aggByChannel(rows);
+  drawPie($('pieMonth'), list);
+  drawBar($('barMonth'), list);
+  renderChannelTable('tblChMonth tbody', rows);
+}
+
+// Range sum + export + channel
+function listAllRowsInRange(from, to){
+  const log = getLog();
+  const rows = [];
+  Object.keys(log).forEach(m=>{
+    (log[m]||[]).forEach(r=>{
+      if ((!from || r.date >= from) && (!to || r.date <= to)) rows.push(r);
+    });
+  });
+  return rows.sort((a,b)=> a.date.localeCompare(b.date));
+}
+$('sumRange').addEventListener('click', ()=>{
+  const from = $('from').value || null;
+  const to = $('to').value || null;
+  const rows = listAllRowsInRange(from, to);
+  let sumR=0, sumA=0;
+  rows.forEach(r=>{ sumR+=r.rev; sumA+=r.ad; });
+  const rROI = sumA>0 ? sumR/sumA : (sumR>0 ? Infinity : NaN);
+  $('rRev').textContent = 'NT$ ' + fmtN(sumR);
+  $('rAd').textContent = 'NT$ ' + fmtN(sumA);
+  paintVal('rROI', rROI, (v)=> v>=3 ? 'ok' : (v>=2 ? 'warn' : 'bad'), (v)=> isFinite(v)?v.toFixed(2):'∞');
+  const rate = sumR>0 ? sumA/sumR : NaN;
+  paintVal('rRate', rate, (v)=> v<=0.15 ? 'ok' : (v<=0.3 ? 'warn' : 'bad'), (v)=> fmtP(v));
+
+  const {list} = aggByChannel(rows);
+  drawPie($('pieRange'), list);
+  drawBar($('barRange'), list);
+  renderChannelTable('tblChRange tbody', rows);
+});
+$('exportRange').addEventListener('click', ()=>{
+  const from = $('from').value || '';
+  const to = $('to').value || '';
+  const rows = listAllRowsInRange(from || null, to || null);
+  let csv = 'date,revenue,ad,platform_pct,gross_pct,channel,note,roi\n';
+  rows.forEach(r=>{
+    const roi = r.ad>0 ? (r.rev/r.ad).toFixed(4) : (r.rev>0 ? 'INF' : '0');
+    const plat = (r.platform!=null)? r.platform : getCfg().platform;
+    const gro  = (r.gross!=null)? r.gross : getCfg().gross;
+    const ch   = (r.channel||'').replace(/,/g,' ');
+    const nt   = (r.note||'').replace(/\r?\n/g,' ').replace(/,/g,' ');
+    csv += `${r.date},${r.rev},${r.ad},${plat},${gro},${ch},${nt},${roi}\n`;
+  });
+  downloadCSV(csv, `yicun_roi_range_${from||'start'}_${to||'end'}.csv`);
+});
+
+function downloadCSV(csv, filename){
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Init
+(function init(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('yc_roi_quick_pro')||'{}');
+    ['rev','ad','platform','gross','other'].forEach(id=> { if(saved[id]!==undefined) $(id).value = saved[id]; });
+  }catch(e){}
+  applyCfgToUI();
+  $('date').value = new Date().toISOString().slice(0,10);
+  renderMonth();
+  recalc();
+})();
+</script>
+</body>
+</html>
