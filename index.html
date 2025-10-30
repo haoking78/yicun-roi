@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>YICUN 蝦皮盈虧 Pro＋ v5.1（每日訂單制｜批次刪退單）</title>
+<title>YICUN 蝦皮盈虧 Pro＋ v5.2（每日訂單制｜批次刪退單｜淨利綠紅顯示）</title>
 <meta name="theme-color" content="#000000" />
-<link rel="manifest" href="manifest.json?v=5.1">
+<link rel="manifest" href="manifest.json?v=5.2">
 <link rel="apple-touch-icon" href="yicun_icon_192.png?v=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-:root{ --yc:#ff6a00; --glass: rgba(30,30,30,.75); --line: rgba(255,106,0,.35); --text:#f5f5f7; }
+:root{ --yc:#ff6a00; --glass: rgba(30,30,30,.75); --line: rgba(255,106,0,.35); --text:#f5f5f7; --profit:#00e08d; --loss:#ff5f6a; }
 *{box-sizing:border-box}
 body{ margin:0; color:var(--text); font-family: 'Source Han Sans TC','Noto Sans TC','Segoe UI',system-ui,Arial,sans-serif;
   background: radial-gradient(900px 500px at 80% -10%, rgba(255,106,0,.25), transparent 55%),
@@ -36,8 +36,6 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
 .kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12); border-radius:14px;padding:14px}
 .kpi h3{margin:0 0 6px;font-size:12px;opacity:.8}
 .kpi .v{font-size:22px;font-weight:800}
-.kpi .v.profit{color:#00e08d}
-.kpi .v.loss{color:#ff5f6a}
 .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
 .progress>i{display:block;height:100%;background:linear-gradient(90deg,#23d18b,#4de1ff);width:0%}
 .note{opacity:.8;font-size:12px}
@@ -52,6 +50,9 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
 .badge{display:inline-block;border:1px solid rgba(255,255,255,.2);padding:4px 8px;border-radius:999px;font-size:12px;opacity:.9}
 .footer{opacity:.6;text-align:center;padding:24px}
 .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* Profit/Loss coloring */
+.profit{color:var(--profit) !important}
+.loss{color:var(--loss) !important}
 </style>
 </head>
 <body>
@@ -196,6 +197,15 @@ function setOrders(v){ set('orders', v); }
 function admap(){ return get('adByDate', {}); } // { 'YYYY-MM-DD': number }
 function setAdmap(v){ set('adByDate', v); }
 
+// helpers
+function setSignAndColor(el, value){
+  el.classList.remove('profit','loss');
+  if(value === null || value === undefined || isNaN(value)) { el.textContent = '—'; return; }
+  const sign = value >= 0 ? '+' : '-';
+  el.textContent = sign + nf.format(Math.abs(value));
+  el.classList.add(value >= 0 ? 'profit' : 'loss');
+}
+
 // init inputs
 $('#date').value = todayStr();
 
@@ -208,7 +218,7 @@ function quickCompute(){
   const net = gross - ads - state.other - pf;
   const be = (state.margin>0 && state.platform < 100)? 1/((state.margin/100)*(1-state.platform/100)) : 0;
   $('#roiV').textContent = ads? nf.format(amt/ads) : '—';
-  $('#netV').textContent = (net>=0?'':'-') + nf.format(Math.abs(net));
+  setSignAndColor($('#netV'), net);
   $('#beV').textContent = be? nf.format(be) : '—';
   $('#pfV').textContent = nf.format(pf);
   $('#roiQuick').value = ads? (amt/ads).toFixed(2) : '';
@@ -302,12 +312,14 @@ function renderDay(){
     const pf = o.amount * platformRate;
     const gross = o.amount * marginRate;
     const net = gross - pf - state.other; // 單筆不扣廣告（廣告以整日計）
+
     const tr = document.createElement('tr');
+    const netClass = net >= 0 ? 'profit' : 'loss';
     tr.innerHTML = `<td><input type="checkbox" class="selbox" data-idx="${o._idx}"></td>
       <td>${o.date}</td>
       <td>${o.id}</td>
       <td>${nf.format(o.amount)}</td>
-      <td>${(net>=0?'':'-')+nf.format(Math.abs(net))}</td>
+      <td class="${netClass}">${(net>=0?'+':'-')+nf.format(Math.abs(net))}</td>
       <td>${ad? (o.amount/ad).toFixed(2): '—'}</td>
       <td><button class="del" onclick="delOrder(${o._idx})">🗑 刪除</button></td>`;
     body.appendChild(tr);
@@ -319,7 +331,7 @@ function renderDay(){
 
   $('#dayRev').textContent = nf.format(sumRev);
   $('#dayAds').textContent = nf.format(dayAds);
-  $('#dayNet').textContent = (dayNet>=0?'':'-')+nf.format(Math.abs(dayNet));
+  setSignAndColor($('#dayNet'), dayNet);
   $('#dayRoi').textContent = dayAds? nf.format(dayRoi): '—';
 }
 
@@ -343,10 +355,10 @@ function renderRange(){
   const avgRoi = sumAds? sumRev/sumAds : 0;
   $('#sumRev').textContent = nf.format(sumRev);
   $('#sumAds').textContent = nf.format(sumAds);
-  $('#sumNet').textContent = (sumNet>=0?'':'-')+nf.format(Math.abs(sumNet));
+  setSignAndColor($('#sumNet'), sumNet);
   $('#avgRoi').textContent = sumAds? nf.format(avgRoi): '—';
 
-  // 今日 vs 昨日
+  // 今日 vs 昨日（彩色數字）
   const yyyyMMdd = d => d.toISOString().slice(0,10);
   const t = yyyyMMdd(new Date());
   const ydDate = new Date(); ydDate.setDate(ydDate.getDate()-1); const y = yyyyMMdd(ydDate);
@@ -356,7 +368,10 @@ function renderRange(){
   const tCnt=orders().filter(r=>r.date===t).length, yCnt=orders().filter(r=>r.date===y).length;
   const tNet = tRev * marginRate - tRev * platformRate - (state.other * tCnt) - tAds;
   const yNet = yRev * marginRate - yRev * platformRate - (state.other * yCnt) - yAds;
-  $('#cmp').textContent = `今日 營收 ${nf.format(tRev)} / 廣告 ${nf.format(tAds)} / 淨利 ${nf.format(tNet)}　vs　昨日 ${nf.format(yRev)} / ${nf.format(yAds)} / ${nf.format(yNet)}`;
+
+  const colorSpan = (v)=> `<span class="${v>=0?'profit':'loss'}">${(v>=0?'+':'-')+nf.format(Math.abs(v))}</span>`;
+  const txt = `今日 營收 ${nf.format(tRev)} / 廣告 ${nf.format(tAds)} / 淨利 ${colorSpan(tNet)}　vs　昨日 ${nf.format(yRev)} / ${nf.format(yAds)} / 淨利 ${colorSpan(yNet)}`;
+  document.getElementById('cmp').innerHTML = txt;
 }
 
 // Month progress
