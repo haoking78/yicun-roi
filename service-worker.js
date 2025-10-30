@@ -1,9 +1,9 @@
 
-const CACHE_NAME = 'yicun-roi-v5.2';
+const CACHE_NAME = 'yicun-roi-v5.3';
 const CORE = [
   './',
-  './YICUN_ROI_Pro_v5_2.html',
-  './manifest.json?v=5.2',
+  './YICUN_ROI_Pro_v5_3.html',
+  './manifest.json?v=5.3',
   './yicun_icon_192.png?v=5',
   './yicun_icon_512.png?v=5'
 ];

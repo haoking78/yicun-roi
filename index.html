@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>YICUN 蝦皮盈虧 Pro＋ v5.2（每日訂單制｜批次刪退單｜淨利綠紅顯示）</title>
+<title>YICUN 蝦皮盈虧 Pro＋ v5.3（每日訂單制｜批次刪退單｜淨利綠紅顯示）</title>
 <meta name="theme-color" content="#000000" />
 <link rel="manifest" href="manifest.json?v=5.2">
 <link rel="apple-touch-icon" href="yicun_icon_192.png?v=5">
@@ -51,6 +51,8 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
 .footer{opacity:.6;text-align:center;padding:24px}
 .left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 /* Profit/Loss coloring */
+.ok{color:#00e08d !important}
+.warn{color:#ffbd2e !important}
 .profit{color:var(--profit) !important}
 .loss{color:var(--loss) !important}
 </style>
@@ -114,7 +116,11 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
       <div class="kpi"><h3>當日淨利</h3><div class="v" id="dayNet">—</div></div>
       <div class="kpi"><h3>當日平均 ROI</h3><div class="v" id="dayRoi">—</div></div>
     </div>
-    <div class="small">* 當日平均 ROI 以「當日營收總額 ÷ 當日廣告總支出」計算。</div>
+    <div class="kpis" style="margin-top:6px">
+      <div class="kpi"><h3>打平所需 ROI（依設定）</h3><div class="v" id="dayBe">—</div></div>
+      <div class="kpi"><h3>達標狀態</h3><div class="v" id="dayStatus">—</div></div>
+    </div>
+    <div class="small">* 當日平均 ROI 以「當日營收總額 ÷ 當日廣告總支出」計算。達標：當日平均 ROI ≥ 打平所需 ROI。</div>
   </section>
 
   <section class="card">
@@ -332,7 +338,21 @@ function renderDay(){
   $('#dayRev').textContent = nf.format(sumRev);
   $('#dayAds').textContent = nf.format(dayAds);
   setSignAndColor($('#dayNet'), dayNet);
+
   $('#dayRoi').textContent = dayAds? nf.format(dayRoi): '—';
+
+  // Break-even ROI based on settings
+  const be = (state.margin>0 && state.platform<100) ? 1/((state.margin/100)*(1 - state.platform/100)) : 0;
+  document.getElementById('dayBe').textContent = be? nf.format(be): '—';
+  const statusEl = document.getElementById('dayStatus');
+  statusEl.classList.remove('profit','loss','ok','warn');
+  if(dayAds>0 && be){
+    if(dayRoi >= be){ statusEl.textContent = '已達標'; statusEl.classList.add('ok'); }
+    else{ statusEl.textContent = '未達標'; statusEl.classList.add('loss'); }
+  }else{
+    statusEl.textContent = dayAds===0 ? '—（無廣告支出）' : '—';
+  }
+
 }
 
 // Range
