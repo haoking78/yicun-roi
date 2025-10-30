@@ -1,31 +1,31 @@
 
-const CACHE_NAME = 'yicun-roi-v3.3';
-const CORE_ASSETS = [
+const CACHE_NAME = 'yicun-roi-v4.0';
+const CORE = [
   './',
-  './YICUN_ROI_Quick_App_Pro_PLUS_ChannelCharts_v3_3.html',
-  './manifest.json?v=3.3',
-  './yicun_icon_192.png?v=3',
-  './yicun_icon_512.png?v=3'
+  './index.html',
+  './manifest.json?v=4.0',
+  './yicun_icon_192.png?v=4',
+  './yicun_icon_512.png?v=4'
 ];
-self.addEventListener('install', (e) => {
+self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS)).catch(()=>null));
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE)).catch(()=>null));
 });
-self.addEventListener('activate', (e) => {
+self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => k!==CACHE_NAME ? caches.delete(k) : null)))
+    caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE_NAME?caches.delete(k):null)))
   );
   self.clients.claim();
 });
-self.addEventListener('fetch', (e) => {
+self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.origin === location.origin) {
+  if(url.origin === location.origin){
     e.respondWith(
-      caches.match(e.request).then(resp => resp || fetch(e.request).then(r => {
-        const copy = r.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, copy));
-        return r;
-      }).catch(()=>resp))
+      caches.match(e.request).then(r => r || fetch(e.request).then(res=>{
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(c=>c.put(e.request, copy));
+        return res;
+      }).catch(()=>r))
     );
   }
 });

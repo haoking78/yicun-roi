@@ -1,23 +1,284 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>YICUN ROI</title>
-  <link rel="manifest" href="manifest.json?v=3.3">
-  <link rel="apple-touch-icon" href="yicun_icon_192.png?v=3">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta http-equiv="refresh" content="0; URL=YICUN_ROI_Quick_App_Pro_PLUS_ChannelCharts_v3_3.html#settings">
-  <script>
-    // JS fallback redirect
-    window.location.replace('YICUN_ROI_Quick_App_Pro_PLUS_ChannelCharts_v3_3.html#settings');
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', ()=> navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
-    }
-  </script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>YICUN 蝦皮盈虧 Pro＋ v4</title>
+<meta name="theme-color" content="#000000" />
+<link rel="manifest" href="manifest.json?v=4.0">
+<link rel="apple-touch-icon" href="yicun_icon_192.png?v=4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{ --yc:#ff6a00; --glass: rgba(30,30,30,.75); --line: rgba(255,106,0,.35); --text:#f5f5f7; }
+*{box-sizing:border-box}
+body{ margin:0; color:var(--text); font-family: 'Source Han Sans TC','Noto Sans TC','Segoe UI',system-ui,Arial,sans-serif;
+  background: radial-gradient(900px 500px at 80% -10%, rgba(255,106,0,.25), transparent 55%),
+             radial-gradient(900px 500px at -30% 110%, rgba(255,106,0,.12), transparent 55%), #000; }
+header{ display:flex;align-items:center;gap:12px; padding:14px 18px;border-bottom:1px solid var(--line);
+  background:rgba(0,0,0,.55);backdrop-filter: blur(6px); position:sticky;top:0;z-index:10; }
+header img{height:38px;width:38px}
+header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
+.toolbar{margin-left:auto;display:flex;gap:10px}
+.btn{ background:linear-gradient(180deg, rgba(255,106,0,.25), rgba(255,106,0,.08)); border:1px solid var(--line);color:#fff;cursor:pointer;
+  padding:8px 14px;border-radius:10px;font-weight:700; }
+.btn:active{transform:translateY(1px)}
+.wrap{max-width:1000px;margin:18px auto;padding:0 16px}
+.card{ background:var(--glass);border:1px solid rgba(255,255,255,.06); border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 8px 24px rgba(0,0,0,.25) }
+.card h2{margin:0 0 8px;font-size:18px;color:var(--yc)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  color:#fff;border-radius:12px;padding:12px 14px;font-size:16px;text-align:center}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12); border-radius:14px;padding:14px}
+.kpi h3{margin:0 0 6px;font-size:12px;opacity:.8}
+.kpi .v{font-size:22px;font-weight:800}
+.kpi .v.profit{color:#00e08d}
+.kpi .v.loss{color:#ff5f6a}
+.progress{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+.progress>i{display:block;height:100%;background:linear-gradient(90deg,#23d18b,#4de1ff);width:0%}
+.note{opacity:.8;font-size:12px}
+#settingsPanel[hidden]{display:none !important}
+.settings .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.settings .row{grid-template-columns:1fr}}
+.footer{opacity:.6;text-align:center;padding:24px}
+.small{font-size:12px;opacity:.8}
+</style>
 </head>
 <body>
-  <p>Redirecting to <a href="YICUN_ROI_Quick_App_Pro_PLUS_ChannelCharts_v3_3.html#settings">YICUN ROI v3.3</a>…</p>
+<header>
+  <img src="yicun_icon_192.png" alt="YICUN" />
+  <div class="ttl">YICUN 蝦皮盈虧 Pro＋</div>
+  <div class="toolbar">
+    <button class="btn" id="btnExport">匯出 CSV</button>
+    <button class="btn" id="btnClear">清空所有記錄</button>
+    <button class="btn" id="btnSettings">設定</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>快速計算</h2>
+    <div class="grid">
+      <input id="rev" class="input" type="number" placeholder="營業額（含稅/含運） 例：3999" />
+      <input id="ads" class="input" type="number" placeholder="廣告花費 例：1200" />
+    </div>
+    <div class="kpis" style="margin-top:12px">
+      <div class="kpi"><h3>ROI（ROAS）</h3><div class="v" id="roi">—</div></div>
+      <div class="kpi"><h3>廣告費佔營收</h3><div class="v" id="adShare">—</div></div>
+      <div class="kpi"><h3>估算淨利</h3><div class="v" id="net">—</div></div>
+      <div class="kpi"><h3>打平所需 ROI</h3><div class="v" id="breakeven">—</div></div>
+    </div>
+    <div class="small note" style="margin-top:6px">打平 ROI ≈ 1 ÷（毛利率 ×（1 − 平台抽成率））</div>
+    <div style="margin-top:12px">
+      <button class="btn" id="btnSaveRow">存到「每日記錄」</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>每日記錄 / 區間加總</h2>
+    <div class="grid">
+      <input id="from" class="input" type="date" />
+      <input id="to" class="input" type="date" />
+    </div>
+    <div class="kpis" style="margin-top:12px">
+      <div class="kpi"><h3>區間營收小計</h3><div class="v" id="sumRev">—</div></div>
+      <div class="kpi"><h3>區間廣告小計</h3><div class="v" id="sumAds">—</div></div>
+      <div class="kpi"><h3>區間淨利小計</h3><div class="v" id="sumNet">—</div></div>
+      <div class="kpi"><h3>區間平均 ROI</h3><div class="v" id="avgRoi">—</div></div>
+    </div>
+    <div style="margin-top:12px" class="small">今日 vs 昨日：<span id="cmp"></span></div>
+    <div id="table" class="small" style="margin-top:10px; line-height:1.6"></div>
+  </section>
+
+  <section class="card">
+    <h2>本月目標營收</h2>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="small" style="margin-top:6px">本月營收：<span id="mRev">—</span>／目標：<span id="mGoal">—</span>（<span id="mPct">—</span>）</div>
+  </section>
+
+  <section id="settingsPanel" class="card settings" hidden>
+    <h2>設定</h2>
+    <div class="settings">
+      <div class="row">
+        <div>
+          <div class="small">平台抽成預設（%）</div>
+          <input id="st_platform" class="input" type="number" placeholder="預設 20">
+        </div>
+        <div>
+          <div class="small">毛利率預設（%）</div>
+          <input id="st_margin" class="input" type="number" placeholder="預設 60">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <div class="small">其他費用預設（元）</div>
+          <input id="st_other" class="input" type="number" placeholder="可留空">
+        </div>
+        <div>
+          <div class="small">本月目標營收（元）</div>
+          <input id="st_target" class="input" type="number" placeholder="可留空">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn" id="btnApply">儲存並套用</button>
+        <button class="btn" id="btnCollapse" type="button">收起</button>
+      </div>
+      <div class="small note">設定儲存在本機（localStorage）。</div>
+    </div>
+  </section>
+
+  <div class="footer">© 2025 YICUN</div>
+</div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+const nf = new Intl.NumberFormat('zh-Hant', {maximumFractionDigits:2});
+const todayStr = () => new Date().toISOString().slice(0,10);
+function get(k, d){ try{ const v = localStorage.getItem(k); return v!==null? JSON.parse(v): d; }catch(e){ return d; } }
+function set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+// settings
+const state = {
+  platform: Number(get('platform', 20)),
+  margin:   Number(get('margin', 60)),
+  other:    Number(get('other', 0)),
+  target:   Number(get('target', 0))
+};
+$('#st_platform').value = state.platform;
+$('#st_margin').value   = state.margin;
+$('#st_other').value    = state.other;
+$('#st_target').value   = state.target;
+
+// robust open/close
+function openSettings(){ $('#settingsPanel').removeAttribute('hidden'); }
+function closeSettings(){ $('#settingsPanel').setAttribute('hidden',''); }
+$('#btnSettings').addEventListener('click', openSettings);
+$('#btnCollapse').addEventListener('click', closeSettings);
+$('#btnApply').addEventListener('click', ()=>{
+  state.platform = Number($('#st_platform').value || 0);
+  state.margin   = Number($('#st_margin').value || 0);
+  state.other    = Number($('#st_other').value || 0);
+  state.target   = Number($('#st_target').value || 0);
+  set('platform', state.platform); set('margin', state.margin);
+  set('other', state.other); set('target', state.target);
+  closeSettings();
+  compute(); renderMonthProgress(); renderRange();
+  alert('設定已儲存並套用');
+});
+
+// ROI compute
+function compute(){
+  const rev = Number($('#rev').value || 0);
+  const ads = Number($('#ads').value || 0);
+  const platformFee = rev * (state.platform/100);
+  const gross = rev * (state.margin/100);
+  const net = gross - ads - state.other - platformFee;
+  const roi = (ads>0)? rev/ads : 0;
+  const adShare = (rev>0)? (ads/rev*100) : 0;
+  const be = (state.margin>0 && state.platform < 100)? (1/( (state.margin/100) * (1-state.platform/100) )) : 0;
+
+  $('#roi').textContent = ads? nf.format(roi) : '—';
+  $('#adShare').textContent = rev? nf.format(adShare)+'%' : '—';
+  const netEl = $('#net');
+  netEl.textContent = (net>=0? '' : '-') + nf.format(Math.abs(net));
+  netEl.classList.toggle('profit', net>=0);
+  netEl.classList.toggle('loss', net<0);
+  $('#breakeven').textContent = be? nf.format(be) : '—';
+}
+$('#rev').addEventListener('input', compute);
+$('#ads').addEventListener('input', compute);
+
+// rows
+function getRows(){ return get('rows', []); }
+function setRows(v){ set('rows', v); }
+
+$('#btnSaveRow').addEventListener('click', ()=>{
+  const rev = Number($('#rev').value || 0);
+  const ads = Number($('#ads').value || 0);
+  if(!rev && !ads){ alert('請先輸入營業額或廣告花費'); return; }
+  const platformFee = rev * (state.platform/100);
+  const gross = rev * (state.margin/100);
+  const net = gross - ads - state.other - platformFee;
+  const roi = (ads>0)? rev/ads : 0;
+  const rows = getRows();
+  rows.push({date: todayStr(), rev, ads, roi, net});
+  setRows(rows);
+  renderRange();
+  alert('已儲存 1 筆記錄');
+});
+
+$('#btnExport').addEventListener('click', ()=>{
+  const rows = getRows();
+  if(!rows.length){ alert('尚無記錄'); return; }
+  const header = ['date','revenue','adcost','roi','net'];
+  const lines = [header.join(',')].concat(rows.map(r => [r.date,r.rev,r.ads, r.roi.toFixed(2), r.net.toFixed(2)].join(',')));
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'yicun_roi_records.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('#btnClear').addEventListener('click', ()=>{
+  if(confirm('確定清空所有記錄？')){ setRows([]); renderRange(); }
+});
+
+function renderRange(){
+  const rows = getRows();
+  // default range = this month
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  if(!$('#from').value) $('#from').value = ym + '-01';
+  if(!$('#to').value)   $('#to').value   = now.toISOString().slice(0,10);
+  const from = $('#from').value, to = $('#to').value;
+  const inRange = rows.filter(r => r.date >= from && r.date <= to);
+  const sumRev = inRange.reduce((s,r)=>s+r.rev,0);
+  const sumAds = inRange.reduce((s,r)=>s+r.ads,0);
+  const sumNet = inRange.reduce((s,r)=>s+r.net,0);
+  const avgRoi = sumAds? sumRev/sumAds : 0;
+  $('#sumRev').textContent = nf.format(sumRev);
+  $('#sumAds').textContent = nf.format(sumAds);
+  $('#sumNet').textContent = nf.format(sumNet);
+  $('#avgRoi').textContent = sumAds? nf.format(avgRoi) : '—';
+
+  // list
+  const html = inRange.slice().reverse().map(r => `${r.date} ｜ 營收 ${nf.format(r.rev)} ｜ 廣告 ${nf.format(r.ads)} ｜ ROI ${r.ads? (r.rev/r.ads).toFixed(2):'—'} ｜ 淨利 ${nf.format(r.net)}`).join('<br>');
+  $('#table').innerHTML = html || '（此區間無資料）';
+
+  // today vs yesterday
+  const yyyyMMdd = d => d.toISOString().slice(0,10);
+  const t = yyyyMMdd(new Date());
+  const ydDate = new Date(); ydDate.setDate(ydDate.getDate()-1); const y = yyyyMMdd(ydDate);
+  const sum = (d, f) => rows.filter(r=>r.date===d).reduce((s,r)=>s+f(r),0);
+  const tRev=sum(t,r=>r.rev), tAds=sum(t,r=>r.ads), tNet=sum(t,r=>r.net);
+  const yRev=sum(y,r=>r.rev), yAds=sum(y,r=>r.ads), yNet=sum(y,r=>r.net);
+  $('#cmp').textContent = `今日 營收 ${nf.format(tRev)} / 廣告 ${nf.format(tAds)} / 淨利 ${nf.format(tNet)}　vs　昨日 ${nf.format(yRev)} / ${nf.format(yAds)} / ${nf.format(yNet)}`;
+
+  renderMonthProgress();
+}
+$('#from').addEventListener('change', renderRange);
+$('#to').addEventListener('change', renderRange);
+
+function renderMonthProgress(){
+  const rows = getRows();
+  const now = new Date(); const ym = now.toISOString().slice(0,7);
+  const mRows = rows.filter(r => r.date.startsWith(ym));
+  const mRev = mRows.reduce((s,r)=>s+r.rev,0);
+  const goal = state.target || 0;
+  const pct = goal? Math.min(100, Math.round(mRev/goal*100)) : 0;
+  $('#bar').style.width = pct+'%';
+  $('#mRev').textContent = nf.format(mRev);
+  $('#mGoal').textContent = goal? nf.format(goal): '—';
+  $('#mPct').textContent = goal? pct+'%':'—';
+}
+
+compute(); renderRange();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+</script>
 </body>
 </html>
