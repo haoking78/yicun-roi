@@ -1,20 +1,19 @@
 {
   "name": "YICUN 盈虧速算 Pro＋",
-  "short_name": "YICUN ROI",
-  "lang": "zh-Hant",
-  "start_url": "./YICUN_ROI_Quick_App_Pro_PLUS_ChannelCharts_v3.html",
+  "short_name": "YICUN ROI v3.3",
+  "start_url": "./?v=3.3",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "yicun_icon_192.png",
+      "src": "yicun_icon_192.png?v=3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "yicun_icon_512.png",
+      "src": "yicun_icon_512.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
