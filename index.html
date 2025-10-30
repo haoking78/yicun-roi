@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>YICUN 蝦皮盈虧 Pro＋ v4</title>
+<title>YICUN 蝦皮盈虧 Pro＋ v5.1（每日訂單制｜批次刪退單）</title>
 <meta name="theme-color" content="#000000" />
-<link rel="manifest" href="manifest.json?v=4.0">
-<link rel="apple-touch-icon" href="yicun_icon_192.png?v=4">
+<link rel="manifest" href="manifest.json?v=5.1">
+<link rel="apple-touch-icon" href="yicun_icon_192.png?v=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -19,17 +19,18 @@ header{ display:flex;align-items:center;gap:12px; padding:14px 18px;border-botto
   background:rgba(0,0,0,.55);backdrop-filter: blur(6px); position:sticky;top:0;z-index:10; }
 header img{height:38px;width:38px}
 header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
-.toolbar{margin-left:auto;display:flex;gap:10px}
+.toolbar{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
 .btn{ background:linear-gradient(180deg, rgba(255,106,0,.25), rgba(255,106,0,.08)); border:1px solid var(--line);color:#fff;cursor:pointer;
   padding:8px 14px;border-radius:10px;font-weight:700; }
 .btn:active{transform:translateY(1px)}
-.wrap{max-width:1000px;margin:18px auto;padding:0 16px}
+.wrap{max-width:1100px;margin:18px auto;padding:0 16px}
 .card{ background:var(--glass);border:1px solid rgba(255,255,255,.06); border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 8px 24px rgba(0,0,0,.25) }
 .card h2{margin:0 0 8px;font-size:18px;color:var(--yc)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media(max-width:720px){.grid{grid-template-columns:1fr}}
-.input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
-  color:#fff;border-radius:12px;padding:12px 14px;font-size:16px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+.input, select{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  color:#fff;border-radius:12px;padding:12px 14px;font-size:16px;text-align:center;width:100%}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12); border-radius:14px;padding:14px}
@@ -41,10 +42,16 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
 .progress>i{display:block;height:100%;background:linear-gradient(90deg,#23d18b,#4de1ff);width:0%}
 .note{opacity:.8;font-size:12px}
 #settingsPanel[hidden]{display:none !important}
-.settings .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:720px){.settings .row{grid-template-columns:1fr}}
+.table{width:100%;border-collapse:collapse;margin-top:10px}
+.table th,.table td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 8px;text-align:center}
+.table th{opacity:.8}
+.del{cursor:pointer;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;background:rgba(255,255,255,.08)}
+.del:hover{background:rgba(255,0,0,.2)}
+.small{font-size:12px;opacity:.85}
+.right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.badge{display:inline-block;border:1px solid rgba(255,255,255,.2);padding:4px 8px;border-radius:999px;font-size:12px;opacity:.9}
 .footer{opacity:.6;text-align:center;padding:24px}
-.small{font-size:12px;opacity:.8}
+.left{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -53,35 +60,68 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
   <div class="ttl">YICUN 蝦皮盈虧 Pro＋</div>
   <div class="toolbar">
     <button class="btn" id="btnExport">匯出 CSV</button>
-    <button class="btn" id="btnClear">清空所有記錄</button>
+    <button class="btn" id="btnClear">清空所有資料</button>
     <button class="btn" id="btnSettings">設定</button>
   </div>
 </header>
 
 <div class="wrap">
+
   <section class="card">
-    <h2>快速計算</h2>
+    <h2>快速計算（參考用）</h2>
     <div class="grid">
-      <input id="rev" class="input" type="number" placeholder="營業額（含稅/含運） 例：3999" />
-      <input id="ads" class="input" type="number" placeholder="廣告花費 例：1200" />
+      <input id="revQuick" class="input" type="number" placeholder="單筆金額（例：399）" />
+      <input id="adsQuick" class="input" type="number" placeholder="廣告花費（例：80，可空）" />
+      <input id="roiQuick" class="input" type="text" disabled placeholder="ROI 自動顯示" />
     </div>
     <div class="kpis" style="margin-top:12px">
-      <div class="kpi"><h3>ROI（ROAS）</h3><div class="v" id="roi">—</div></div>
-      <div class="kpi"><h3>廣告費佔營收</h3><div class="v" id="adShare">—</div></div>
-      <div class="kpi"><h3>估算淨利</h3><div class="v" id="net">—</div></div>
-      <div class="kpi"><h3>打平所需 ROI</h3><div class="v" id="breakeven">—</div></div>
+      <div class="kpi"><h3>ROI（ROAS）</h3><div class="v" id="roiV">—</div></div>
+      <div class="kpi"><h3>估算淨利</h3><div class="v" id="netV">—</div></div>
+      <div class="kpi"><h3>打平所需 ROI</h3><div class="v" id="beV">—</div></div>
+      <div class="kpi"><h3>平台抽成估計</h3><div class="v" id="pfV">—</div></div>
     </div>
     <div class="small note" style="margin-top:6px">打平 ROI ≈ 1 ÷（毛利率 ×（1 − 平台抽成率））</div>
-    <div style="margin-top:12px">
-      <button class="btn" id="btnSaveRow">存到「每日記錄」</button>
-    </div>
   </section>
 
   <section class="card">
-    <h2>每日記錄 / 區間加總</h2>
+    <h2>每日訂單紀錄</h2>
+    <div class="grid">
+      <input id="date" class="input" type="date" />
+      <input id="orderId" class="input" type="text" placeholder="訂單編號（必填）" />
+      <input id="amount" class="input" type="number" placeholder="訂單金額（必填）" />
+    </div>
+    <div class="left" style="margin-top:10px">
+      <label><input type="checkbox" id="checkAll" /> 全選/取消全選</label>
+      <button class="btn" id="btnBatchDelete">批次刪除退單</button>
+    </div>
+    <div class="right" style="margin-top:10px">
+      <span class="badge">當日廣告總支出：<span id="adDailyShow">—</span></span>
+      <button class="btn" id="btnSetAd">設定當日廣告支出</button>
+      <button class="btn" id="btnAdd">新增訂單</button>
+    </div>
+
+    <table class="table" id="ordersTable">
+      <thead>
+        <tr><th></th><th>日期</th><th>訂單編號</th><th>金額</th><th>淨利</th><th>ROI*</th><th>操作</th></tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+
+    <div class="kpis" style="margin-top:12px">
+      <div class="kpi"><h3>當日營收小計</h3><div class="v" id="dayRev">—</div></div>
+      <div class="kpi"><h3>當日廣告支出</h3><div class="v" id="dayAds">—</div></div>
+      <div class="kpi"><h3>當日淨利</h3><div class="v" id="dayNet">—</div></div>
+      <div class="kpi"><h3>當日平均 ROI</h3><div class="v" id="dayRoi">—</div></div>
+    </div>
+    <div class="small">* 當日平均 ROI 以「當日營收總額 ÷ 當日廣告總支出」計算。</div>
+  </section>
+
+  <section class="card">
+    <h2>區間加總（依訂單日期）</h2>
     <div class="grid">
       <input id="from" class="input" type="date" />
       <input id="to" class="input" type="date" />
+      <div></div>
     </div>
     <div class="kpis" style="margin-top:12px">
       <div class="kpi"><h3>區間營收小計</h3><div class="v" id="sumRev">—</div></div>
@@ -90,7 +130,6 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
       <div class="kpi"><h3>區間平均 ROI</h3><div class="v" id="avgRoi">—</div></div>
     </div>
     <div style="margin-top:12px" class="small">今日 vs 昨日：<span id="cmp"></span></div>
-    <div id="table" class="small" style="margin-top:10px; line-height:1.6"></div>
   </section>
 
   <section class="card">
@@ -99,35 +138,34 @@ header .ttl{font-weight:800;letter-spacing:.5px;color:var(--yc)}
     <div class="small" style="margin-top:6px">本月營收：<span id="mRev">—</span>／目標：<span id="mGoal">—</span>（<span id="mPct">—</span>）</div>
   </section>
 
-  <section id="settingsPanel" class="card settings" hidden>
+  <section id="settingsPanel" class="card" hidden>
     <h2>設定</h2>
-    <div class="settings">
-      <div class="row">
-        <div>
-          <div class="small">平台抽成預設（%）</div>
-          <input id="st_platform" class="input" type="number" placeholder="預設 20">
-        </div>
-        <div>
-          <div class="small">毛利率預設（%）</div>
-          <input id="st_margin" class="input" type="number" placeholder="預設 60">
-        </div>
+    <div class="grid">
+      <div>
+        <div class="small">平台抽成預設（%）</div>
+        <input id="st_platform" class="input" type="number" placeholder="預設 20">
       </div>
-      <div class="row">
-        <div>
-          <div class="small">其他費用預設（元）</div>
-          <input id="st_other" class="input" type="number" placeholder="可留空">
-        </div>
-        <div>
-          <div class="small">本月目標營收（元）</div>
-          <input id="st_target" class="input" type="number" placeholder="可留空">
-        </div>
+      <div>
+        <div class="small">毛利率預設（%）</div>
+        <input id="st_margin" class="input" type="number" placeholder="預設 60">
       </div>
-      <div style="margin-top:12px">
-        <button class="btn" id="btnApply">儲存並套用</button>
-        <button class="btn" id="btnCollapse" type="button">收起</button>
+      <div>
+        <div class="small">其他費用預設（元／單）</div>
+        <input id="st_other" class="input" type="number" placeholder="可留空">
       </div>
-      <div class="small note">設定儲存在本機（localStorage）。</div>
     </div>
+    <div class="grid" style="margin-top:10px">
+      <div>
+        <div class="small">本月目標營收（元）</div>
+        <input id="st_target" class="input" type="number" placeholder="可留空">
+      </div>
+      <div></div><div></div>
+    </div>
+    <div class="right" style="margin-top:12px">
+      <button class="btn" id="btnApply">儲存並套用</button>
+      <button class="btn" id="btnCollapse" type="button">收起</button>
+    </div>
+    <div class="small note" style="margin-top:6px">所有資料皆儲存在本機（localStorage）。</div>
   </section>
 
   <div class="footer">© 2025 YICUN</div>
@@ -152,7 +190,33 @@ $('#st_margin').value   = state.margin;
 $('#st_other').value    = state.other;
 $('#st_target').value   = state.target;
 
-// robust open/close
+// orders storage: array of {date, id, amount}
+function orders(){ return get('orders', []); }
+function setOrders(v){ set('orders', v); }
+function admap(){ return get('adByDate', {}); } // { 'YYYY-MM-DD': number }
+function setAdmap(v){ set('adByDate', v); }
+
+// init inputs
+$('#date').value = todayStr();
+
+// Quick calc
+function quickCompute(){
+  const amt = Number($('#revQuick').value || 0);
+  const ads = Number($('#adsQuick').value || 0);
+  const pf = amt * (state.platform/100);
+  const gross = amt * (state.margin/100);
+  const net = gross - ads - state.other - pf;
+  const be = (state.margin>0 && state.platform < 100)? 1/((state.margin/100)*(1-state.platform/100)) : 0;
+  $('#roiV').textContent = ads? nf.format(amt/ads) : '—';
+  $('#netV').textContent = (net>=0?'':'-') + nf.format(Math.abs(net));
+  $('#beV').textContent = be? nf.format(be) : '—';
+  $('#pfV').textContent = nf.format(pf);
+  $('#roiQuick').value = ads? (amt/ads).toFixed(2) : '';
+}
+$('#revQuick').addEventListener('input', quickCompute);
+$('#adsQuick').addEventListener('input', quickCompute);
+
+// Settings panel
 function openSettings(){ $('#settingsPanel').removeAttribute('hidden'); }
 function closeSettings(){ $('#settingsPanel').setAttribute('hidden',''); }
 $('#btnSettings').addEventListener('click', openSettings);
@@ -165,117 +229,183 @@ $('#btnApply').addEventListener('click', ()=>{
   set('platform', state.platform); set('margin', state.margin);
   set('other', state.other); set('target', state.target);
   closeSettings();
-  compute(); renderMonthProgress(); renderRange();
+  renderDay(); renderRange(); renderMonth();
   alert('設定已儲存並套用');
 });
 
-// ROI compute
-function compute(){
-  const rev = Number($('#rev').value || 0);
-  const ads = Number($('#ads').value || 0);
-  const platformFee = rev * (state.platform/100);
-  const gross = rev * (state.margin/100);
-  const net = gross - ads - state.other - platformFee;
-  const roi = (ads>0)? rev/ads : 0;
-  const adShare = (rev>0)? (ads/rev*100) : 0;
-  const be = (state.margin>0 && state.platform < 100)? (1/( (state.margin/100) * (1-state.platform/100) )) : 0;
+// Add order
+$('#btnAdd').addEventListener('click', ()=>{
+  const d = $('#date').value || todayStr();
+  const id = ($('#orderId').value || '').trim();
+  const amt = Number($('#amount').value || 0);
+  if(!id || !amt){ alert('請輸入「訂單編號」與「金額」'); return; }
+  const arr = orders();
+  arr.push({date:d, id, amount: amt});
+  setOrders(arr);
+  $('#orderId').value = ''; $('#amount').value = '';
+  renderDay(); renderRange(); renderMonth();
+});
 
-  $('#roi').textContent = ads? nf.format(roi) : '—';
-  $('#adShare').textContent = rev? nf.format(adShare)+'%' : '—';
-  const netEl = $('#net');
-  netEl.textContent = (net>=0? '' : '-') + nf.format(Math.abs(net));
-  netEl.classList.toggle('profit', net>=0);
-  netEl.classList.toggle('loss', net<0);
-  $('#breakeven').textContent = be? nf.format(be) : '—';
+// Set today's ad spend
+$('#btnSetAd').addEventListener('click', ()=>{
+  const d = $('#date').value || todayStr();
+  const current = admap()[d] || 0;
+  const v = prompt('輸入此日期的廣告總支出：', current);
+  if(v===null) return;
+  const n = Number(v)||0;
+  const m = admap(); m[d]=n; setAdmap(m);
+  renderDay(); renderRange(); renderMonth();
+});
+
+$('#date').addEventListener('change', ()=>{ renderDay(); });
+
+function delOrder(idx){
+  const arr = orders();
+  arr.splice(idx,1);
+  setOrders(arr);
+  renderDay(); renderRange(); renderMonth();
 }
-$('#rev').addEventListener('input', compute);
-$('#ads').addEventListener('input', compute);
 
-// rows
-function getRows(){ return get('rows', []); }
-function setRows(v){ set('rows', v); }
-
-$('#btnSaveRow').addEventListener('click', ()=>{
-  const rev = Number($('#rev').value || 0);
-  const ads = Number($('#ads').value || 0);
-  if(!rev && !ads){ alert('請先輸入營業額或廣告花費'); return; }
-  const platformFee = rev * (state.platform/100);
-  const gross = rev * (state.margin/100);
-  const net = gross - ads - state.other - platformFee;
-  const roi = (ads>0)? rev/ads : 0;
-  const rows = getRows();
-  rows.push({date: todayStr(), rev, ads, roi, net});
-  setRows(rows);
-  renderRange();
-  alert('已儲存 1 筆記錄');
+// ---- Batch delete marked orders ----
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id==='btnBatchDelete'){
+    const cbs = Array.from(document.querySelectorAll('input.selbox:checked'));
+    if(cbs.length===0){ alert('請先勾選要刪除的退單'); return; }
+    if(!confirm('確定刪除選取的 '+cbs.length+' 筆退單？此動作無法復原。')) return;
+    const idxs = cbs.map(cb => Number(cb.getAttribute('data-idx'))).sort((a,b)=>b-a);
+    const arr = orders();
+    idxs.forEach(i => { if(i>=0 && i < arr.length) arr.splice(i,1); });
+    setOrders(arr);
+    renderDay(); renderRange(); renderMonth();
+  }
 });
 
-$('#btnExport').addEventListener('click', ()=>{
-  const rows = getRows();
-  if(!rows.length){ alert('尚無記錄'); return; }
-  const header = ['date','revenue','adcost','roi','net'];
-  const lines = [header.join(',')].concat(rows.map(r => [r.date,r.rev,r.ads, r.roi.toFixed(2), r.net.toFixed(2)].join(',')));
-  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'yicun_roi_records.csv'; a.click();
-  URL.revokeObjectURL(url);
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id==='checkAll'){
+    const on = e.target.checked;
+    document.querySelectorAll('input.selbox').forEach(cb => cb.checked = on);
+  }
 });
 
-$('#btnClear').addEventListener('click', ()=>{
-  if(confirm('確定清空所有記錄？')){ setRows([]); renderRange(); }
-});
+// Day view
+function renderDay(){
+  const d = $('#date').value || todayStr();
+  const arr = orders().map((o,i)=>({...o, _idx:i})).filter(o=>o.date===d);
+  const body = $('#ordersBody'); body.innerHTML = '';
+  const ad = admap()[d] || 0;
+  $('#adDailyShow').textContent = nf.format(ad);
 
+  const platformRate = state.platform/100, marginRate = state.margin/100;
+  let sumRev=0;
+  arr.forEach(o=>{
+    sumRev += o.amount;
+    const pf = o.amount * platformRate;
+    const gross = o.amount * marginRate;
+    const net = gross - pf - state.other; // 單筆不扣廣告（廣告以整日計）
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="checkbox" class="selbox" data-idx="${o._idx}"></td>
+      <td>${o.date}</td>
+      <td>${o.id}</td>
+      <td>${nf.format(o.amount)}</td>
+      <td>${(net>=0?'':'-')+nf.format(Math.abs(net))}</td>
+      <td>${ad? (o.amount/ad).toFixed(2): '—'}</td>
+      <td><button class="del" onclick="delOrder(${o._idx})">🗑 刪除</button></td>`;
+    body.appendChild(tr);
+  });
+
+  const dayAds = ad;
+  const dayNet = sumRev * marginRate - sumRev * platformRate - state.other * arr.length - dayAds;
+  const dayRoi = dayAds? (sumRev/dayAds) : 0;
+
+  $('#dayRev').textContent = nf.format(sumRev);
+  $('#dayAds').textContent = nf.format(dayAds);
+  $('#dayNet').textContent = (dayNet>=0?'':'-')+nf.format(Math.abs(dayNet));
+  $('#dayRoi').textContent = dayAds? nf.format(dayRoi): '—';
+}
+
+// Range
 function renderRange(){
-  const rows = getRows();
-  // default range = this month
+  const rows = orders();
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
   if(!$('#from').value) $('#from').value = ym + '-01';
   if(!$('#to').value)   $('#to').value   = now.toISOString().slice(0,10);
   const from = $('#from').value, to = $('#to').value;
+
+  const m = admap();
   const inRange = rows.filter(r => r.date >= from && r.date <= to);
-  const sumRev = inRange.reduce((s,r)=>s+r.rev,0);
-  const sumAds = inRange.reduce((s,r)=>s+r.ads,0);
-  const sumNet = inRange.reduce((s,r)=>s+r.net,0);
+  const sumRev = inRange.reduce((s,r)=>s+r.amount,0);
+  const days = Object.keys(m).filter(d => d >= from && d <= to);
+  const sumAds = days.reduce((s,d)=>s + (m[d]||0), 0);
+
+  const platformRate = state.platform/100, marginRate = state.margin/100;
+  const sumNet = (sumRev * marginRate) - (sumRev * platformRate) - (state.other * inRange.length) - sumAds;
   const avgRoi = sumAds? sumRev/sumAds : 0;
   $('#sumRev').textContent = nf.format(sumRev);
   $('#sumAds').textContent = nf.format(sumAds);
-  $('#sumNet').textContent = nf.format(sumNet);
-  $('#avgRoi').textContent = sumAds? nf.format(avgRoi) : '—';
+  $('#sumNet').textContent = (sumNet>=0?'':'-')+nf.format(Math.abs(sumNet));
+  $('#avgRoi').textContent = sumAds? nf.format(avgRoi): '—';
 
-  // list
-  const html = inRange.slice().reverse().map(r => `${r.date} ｜ 營收 ${nf.format(r.rev)} ｜ 廣告 ${nf.format(r.ads)} ｜ ROI ${r.ads? (r.rev/r.ads).toFixed(2):'—'} ｜ 淨利 ${nf.format(r.net)}`).join('<br>');
-  $('#table').innerHTML = html || '（此區間無資料）';
-
-  // today vs yesterday
+  // 今日 vs 昨日
   const yyyyMMdd = d => d.toISOString().slice(0,10);
   const t = yyyyMMdd(new Date());
   const ydDate = new Date(); ydDate.setDate(ydDate.getDate()-1); const y = yyyyMMdd(ydDate);
-  const sum = (d, f) => rows.filter(r=>r.date===d).reduce((s,r)=>s+f(r),0);
-  const tRev=sum(t,r=>r.rev), tAds=sum(t,r=>r.ads), tNet=sum(t,r=>r.net);
-  const yRev=sum(y,r=>r.rev), yAds=sum(y,r=>r.ads), yNet=sum(y,r=>r.net);
+  const sumBy = (date, pick) => rows.filter(r=>r.date===date).reduce((s,r)=>s+pick(r),0);
+  const tRev=sumBy(t, r=>r.amount), yRev=sumBy(y, r=>r.amount);
+  const tAds=admap()[t]||0, yAds=admap()[y]||0;
+  const tCnt=orders().filter(r=>r.date===t).length, yCnt=orders().filter(r=>r.date===y).length;
+  const tNet = tRev * marginRate - tRev * platformRate - (state.other * tCnt) - tAds;
+  const yNet = yRev * marginRate - yRev * platformRate - (state.other * yCnt) - yAds;
   $('#cmp').textContent = `今日 營收 ${nf.format(tRev)} / 廣告 ${nf.format(tAds)} / 淨利 ${nf.format(tNet)}　vs　昨日 ${nf.format(yRev)} / ${nf.format(yAds)} / ${nf.format(yNet)}`;
-
-  renderMonthProgress();
 }
-$('#from').addEventListener('change', renderRange);
-$('#to').addEventListener('change', renderRange);
 
-function renderMonthProgress(){
-  const rows = getRows();
+// Month progress
+function renderMonth(){
+  const rows = orders();
   const now = new Date(); const ym = now.toISOString().slice(0,7);
   const mRows = rows.filter(r => r.date.startsWith(ym));
-  const mRev = mRows.reduce((s,r)=>s+r.rev,0);
+  const mRev = mRows.reduce((s,r)=>s+r.amount,0);
   const goal = state.target || 0;
   const pct = goal? Math.min(100, Math.round(mRev/goal*100)) : 0;
-  $('#bar').style.width = pct+'%';
-  $('#mRev').textContent = nf.format(mRev);
-  $('#mGoal').textContent = goal? nf.format(goal): '—';
-  $('#mPct').textContent = goal? pct+'%':'—';
+  document.getElementById('bar').style.width = pct+'%';
+  document.getElementById('mRev').textContent = nf.format(mRev);
+  document.getElementById('mGoal').textContent = goal? nf.format(goal): '—';
+  document.getElementById('mPct').textContent = goal? pct+'%':'—';
 }
 
-compute(); renderRange();
+// export
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  const rows = orders();
+  const ads = admap();
+  const header1 = 'orders,date,order_id,amount';
+  const lines1 = rows.map(r => `orders,${r.date},${r.id},${r.amount}`);
+  const header2 = 'ads,date,amount';
+  const lines2 = Object.keys(ads).sort().map(d => `ads,${d},${ads[d]}`);
+  const blob = new Blob([[header1].concat(lines1).concat([header2]).concat(lines2).join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'yicun_orders_and_ads.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
 
+// clear
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  if(!confirm('確定清空所有「訂單與每日廣告」資料？')) return;
+  setOrders([]); setAdmap({});
+  renderDay(); renderRange(); renderMonth();
+});
+
+// init
+(function init(){
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  if(!document.getElementById('date').value) document.getElementById('date').value = now.toISOString().slice(0,10);
+  if(!document.getElementById('from').value) document.getElementById('from').value = ym + '-01';
+  if(!document.getElementById('to').value)   document.getElementById('to').value   = now.toISOString().slice(0,10);
+  renderDay(); renderRange(); renderMonth();
+  quickCompute();
+})();
+
+// SW
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=> navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }
